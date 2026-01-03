@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sketch Master Timer</title>
+    <!-- Import Handwritten Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #f4f4f4;
+            --ink-color: #2c3e50;
+            --marker-blue: #3498db;
+            --marker-red: #e74c3c;
+            --marker-yellow: #f1c40f;
+            --marker-green: #2ecc71;
+            --paper-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none; /* UI feels more like an app */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            font-family: 'Patrick Hand', cursive;
+            background-color: var(--bg-color);
+            /* Dot Grid Pattern */
+            background-image: radial-gradient(#bdc3c7 1.5px, transparent 1.5px);
+            background-size: 20px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px; /* For 3D tilt effect */
+        }
+
+        /* Floating Scribbles Background Animation */
+        .scribble {
+            position: absolute;
+            opacity: 0.1;
+            z-index: 0;
+            animation: float 20s infinite linear;
+            pointer-events: none;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(110vh) rotate(0deg); }
+            100% { transform: translateY(-10vh) rotate(360deg); }
+        }
+
+        /* Main 3D Card Container */
+        #app-wrapper {
+            position: relative;
+            z-index: 10;
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out; /* Smooth tilt */
+        }
+
+        .main-card {
+            background: white;
+            width: 500px;
+            min-height: 550px;
+            padding: 40px;
+            border-radius: 2px; /* Slightly irregular via SVG filter */
+            box-shadow: 
+                2px 2px 0px #95a5a6, /* Hard shadow 1 */
+                4px 4px 0px #7f8c8d, /* Hard shadow 2 */
+                8px 15px 20px rgba(0,0,0,0.2); /* Soft blur shadow */
+            text-align: center;
+            position: relative;
+            border: 3px solid var(--ink-color);
+            /* Apply the "wiggle" SVG filter to make borders look hand-drawn */
+            filter: url('#wiggle-filter'); 
+            transform: translateZ(20px); /* Lift off background */
+        }
+
+        /* Tape effect on top */
+        .tape {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-2deg);
+            width: 150px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.6);
+            border-left: 2px dashed rgba(0,0,0,0.1);
+            border-right: 2px dashed rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 20;
+            backdrop-filter: blur(2px);
+        }
+
+        h1 {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 3rem;
+            color: var(--ink-color);
+            margin: 0 0 10px 0;
+            transform: rotate(-1deg);
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-style: italic;
+            border-bottom: 2px solid var(--marker-yellow);
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+
+        /* Inputs look like form lines */
+        .form-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        label {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 5px;
+            color: var(--ink-color);
+        }
+
+        .input-wrapper {
+            position: relative;
+            border-bottom: 3px solid var(--ink-color);
+        }
+
+        input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-family: 'Permanent Marker', cursive;
+            font-size: 2rem;
+            color: var(--marker-blue);
+            outline: none;
+            padding: 5px 0;
+            text-align: right;
+        }
+
+        input::placeholder {
+            color: #bdc3c7;
+            opacity: 0.5;
+        }
+
+        /* 3D Buttons Logic */
+        .btn-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .sketch-btn {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 1.4rem;
+            padding: 12px 30px;
+            border: 3px solid var(--ink-color);
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; /* Hand-drawn shape */
+            cursor: pointer;
+            position: relative;
+            transition: all 0.1s ease;
+            text-transform: uppercase;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Button Colors */
+        .btn-primary {
+            background-color: var(--marker-blue);
+            color: white;
+            box-shadow: 6px 6px 0px var(--ink-color); /* The 3D offset shadow */
+        }
+
+        .btn-secondary {
+            background-color: var(--marker-yellow);
+            color: var(--ink-color);
+            box-shadow: 6px 6px 0px var(--ink-color);
+        }
+
+        .btn-danger {
+            background-color: var(--marker-red);
+            color: white;
+            box-shadow: 6px 6px 0px var(--ink-color);
+        }
+
+        /* Button Hover & Active States */
+        .sketch-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 8px 8px 0px var(--ink-color);
+        }
+
+        .sketch-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px var(--ink-color);
+        }
+
+        /* Timer Display */
+        .timer-display {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 6rem;
+            margin: 20px 0;
+            color: var(--ink-color);
+            position: relative;
+            display: inline-block;
+        }
+
+        .timer-display.warning {
+            color: #d35400;
+        }
+
+        .timer-display.critical {
+            color: var(--marker-red);
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        /* Progress Bar - Highlighter Style */
+        .progress-box {
+            background: #ecf0f1;
+            border: 2px dashed var(--ink-color);
+            height: 30px;
+            width: 100%;
+            border-radius: 15px;
+            margin: 20px 0;
+            overflow: hidden;
+            position: relative;
+            transform: rotate(-1deg);
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: repeating-linear-gradient(
+                45deg,
+                var(--marker-green),
+                var(--marker-green) 10px,
+                #27ae60 10px,
+                #27ae60 20px
+            );
+            transition: width 0.5s ease-out;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .question-tracker {
+            font-size: 1.8rem;
+            color: var(--ink-color);
+            margin-bottom: 10px;
+            background: rgba(255,255,255,0.8);
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+            border: 2px solid var(--ink-color);
+            transform: rotate(1deg);
+        }
+
+        /* Utility */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .main-card {
+                width: 90%;
+                padding: 20px;
+            }
+            h1 { font-size: 2.5rem; }
+            .timer-display { font-size: 4rem; }
+            .btn-container { flex-direction: column; }
+            .sketch-btn { width: 100%; }
+        }
+
+        /* Sticky Note for Reset Button in Timer */
+        .sticky-note {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: var(--marker-yellow);
+            padding: 10px;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(15deg);
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            font-family: 'Permanent Marker';
+            font-size: 0.9rem;
+            cursor: pointer;
+            z-index: 30;
+            border-bottom-right-radius: 60px 10px;
+        }
+        
+        .sticky-note:active {
+            transform: rotate(15deg) scale(0.95);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- SVG Filter Definition (Hidden) to create the squiggly line effect -->
+    <svg style="display: none;">
+        <defs>
+            <filter id="wiggle-filter">
+                <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- Background Elements (Generated via JS or placed here) -->
+    <svg class="scribble" style="left: 10%; width: 100px;" viewBox="0 0 100 100">
+        <path d="M10,50 Q30,10 50,50 T90,50" fill="none" stroke="#2c3e50" stroke-width="3" />
+    </svg>
+    <svg class="scribble" style="left: 80%; animation-delay: 5s;" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" fill="none" stroke="#e74c3c" stroke-width="3" stroke-dasharray="10 5" />
+    </svg>
+    <svg class="scribble" style="left: 50%; animation-delay: 2s;" viewBox="0 0 100 100">
+        <rect x="10" y="10" width="80" height="80" fill="none" stroke="#3498db" stroke-width="3" transform="rotate(45 50 50)" />
+    </svg>
+
+    <!-- 3D Tilt Wrapper -->
+    <div id="app-wrapper">
+        <div class="main-card">
+            <div class="tape"></div>
+
+            <!-- SETUP SECTION -->
+            <section id="setup-section">
+                <h1>Practice<br>Timer</h1>
+                <h2>Let's get to work!</h2>
+
+                <div class="form-group">
+                    <label>Seconds per Q:</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="time-input" value="150" placeholder="150">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Number of Qs:</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="questions-input" value="25" placeholder="25">
+                    </div>
+                </div>
+
+                <div class="btn-container">
+                    <button id="btn-start" class="sketch-btn btn-primary">START!</button>
+                </div>
+            </section>
+
+            <!-- TIMER SECTION -->
+            <section id="timer-section" class="hidden">
+                <!-- Sticky Note Reset Button -->
+                <div id="btn-reset-sticky" class="sticky-note">
+                    STOP<br>IT
+                </div>
+
+                <div class="question-tracker" id="progress-text">Q 1 / 25</div>
+                
+                <div class="timer-display" id="timer-display">02:30</div>
+
+                <div class="progress-box">
+                    <div class="progress-fill" id="progress-bar"></div>
+                </div>
+
+                <div class="btn-container">
+                    <button id="btn-next" class="sketch-btn btn-primary">NEXT Q</button>
+                </div>
+            </section>
+
+            <!-- SUMMARY SECTION -->
+            <section id="summary-section" class="hidden">
+                <h1>All Done!</h1>
+                <h2>Great job, champion.</h2>
+                <svg width="100" height="100" viewBox="0 0 100 100" style="margin-bottom: 20px;">
+                    <path d="M10,50 L40,80 L90,20" fill="none" stroke="#2ecc71" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div class="btn-container">
+                    <button id="btn-restart" class="sketch-btn btn-secondary">AGAIN?</button>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script>
+        // --- AUDIO SYSTEM ---
+        // Sounds generated via code (Oscillators)
+        let audioCtx;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSketchSound() {
+            if (!audioCtx) return;
+
+            const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            // Short, sharp "Ding" like a marker cap clicking or a bell
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(600, t);
+            osc.frequency.exponentialRampToValueAtTime(800, t + 0.1);
+
+            gain.gain.setValueAtTime(0.3, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(t);
+            osc.stop(t + 0.3);
+        }
+
+        // --- 3D TILT EFFECT ---
+        const card = document.querySelector('.main-card');
+        const wrapper = document.getElementById('app-wrapper');
+
+        document.addEventListener('mousemove', (e) => {
+            if (window.innerWidth < 600) return; // Disable on mobile
+
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+
+            wrapper.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+
+        // Reset tilt on mouse leave
+        document.addEventListener('mouseleave', () => {
+            wrapper.style.transform = `rotateY(0deg) rotateX(0deg)`;
+        });
+
+        // --- DOM ELEMENTS ---
+        const setupSection = document.getElementById('setup-section');
+        const timerSection = document.getElementById('timer-section');
+        const summarySection = document.getElementById('summary-section');
+        
+        const timeInput = document.getElementById('time-input');
+        const questionsInput = document.getElementById('questions-input');
+        
+        const timerDisplay = document.getElementById('timer-display');
+        const progressText = document.getElementById('progress-text');
+        const progressBar = document.getElementById('progress-bar');
+        
+        const btnStart = document.getElementById('btn-start');
+        const btnNext = document.getElementById('btn-next');
+        const btnResetSticky = document.getElementById('btn-reset-sticky');
+        const btnRestart = document.getElementById('btn-restart');
+
+        // --- STATE ---
+        let totalTimePerQuestion = 150;
+        let totalQuestions = 25;
+        let currentQuestion = 1;
+        let timeLeft = 0;
+        let timerInterval = null;
+
+        // --- EVENTS ---
+        btnStart.addEventListener('click', () => {
+            initAudio();
+            startPractice();
+        });
+
+        btnNext.addEventListener('click', nextQuestion);
+        btnResetSticky.addEventListener('click', resetPractice);
+        btnRestart.addEventListener('click', () => {
+            resetPractice();
+            setupSection.classList.remove('hidden');
+        });
+
+        // --- LOGIC ---
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function updateVisuals() {
+            timerDisplay.textContent = formatTime(timeLeft);
+            progressText.textContent = `Q ${currentQuestion} / ${totalQuestions}`;
+            
+            // Calculate progress
+            const percent = ((currentQuestion - 1) / totalQuestions) * 100;
+            progressBar.style.width = `${percent}%`;
+
+            timerDisplay.classList.remove('warning', 'critical');
+            if (timeLeft <= 10) {
+                timerDisplay.classList.add('critical');
+            } else if (timeLeft <= 30) {
+                timerDisplay.classList.add('warning');
+            }
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = totalTimePerQuestion;
+            updateVisuals();
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateVisuals();
+
+                if (timeLeft < 0) {
+                    timeLeft = 0;
+                    updateVisuals();
+                    clearInterval(timerInterval);
+                }
+            }, 1000);
+        }
+
+        function startPractice() {
+            const t = parseInt(timeInput.value);
+            const q = parseInt(questionsInput.value);
+
+            if (isNaN(t) || t <= 0 || isNaN(q) || q <= 0) {
+                // Shake the card to indicate error
+                wrapper.style.animation = "shake 0.5s";
+                setTimeout(() => wrapper.style.animation = "", 500);
+                return;
+            }
+
+            totalTimePerQuestion = t;
+            totalQuestions = q;
+            currentQuestion = 1;
+
+            setupSection.classList.add('hidden');
+            summarySection.classList.add('hidden');
+            timerSection.classList.remove('hidden');
+
+            startTimer();
+        }
+
+        function nextQuestion() {
+            playSketchSound();
+
+            if (currentQuestion < totalQuestions) {
+                currentQuestion++;
+                startTimer();
+            } else {
+                finishPractice();
+            }
+        }
+
+        function finishPractice() {
+            clearInterval(timerInterval);
+            timerSection.classList.add('hidden');
+            summarySection.classList.remove('hidden');
+            progressBar.style.width = '100%';
+        }
+
+        function resetPractice() {
+            clearInterval(timerInterval);
+            timerSection.classList.add('hidden');
+            summarySection.classList.add('hidden');
+            setupSection.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            timerDisplay.classList.remove('warning', 'critical');
+            timerDisplay.textContent = formatTime(totalTimePerQuestion);
+        }
+    </script>
+</body>
+</html>

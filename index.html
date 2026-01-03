@@ -17,12 +17,13 @@
             --marker-red: #e74c3c;
             --marker-yellow: #f1c40f;
             --marker-green: #2ecc71;
+            --marker-pink: #ff9ff3;
             --paper-shadow: 0 10px 20px rgba(0,0,0,0.15);
         }
 
         * {
             box-sizing: border-box;
-            user-select: none; /* UI feels more like an app */
+            user-select: none;
         }
 
         body {
@@ -39,7 +40,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            perspective: 1000px; /* For 3D tilt effect */
+            perspective: 1000px;
         }
 
         /* Floating Scribbles Background Animation */
@@ -61,7 +62,7 @@
             position: relative;
             z-index: 10;
             transform-style: preserve-3d;
-            transition: transform 0.1s ease-out; /* Smooth tilt */
+            transition: transform 0.1s ease-out;
         }
 
         .main-card {
@@ -69,17 +70,16 @@
             width: 500px;
             min-height: 550px;
             padding: 40px;
-            border-radius: 2px; /* Slightly irregular via SVG filter */
+            border-radius: 2px;
             box-shadow: 
-                2px 2px 0px #95a5a6, /* Hard shadow 1 */
-                4px 4px 0px #7f8c8d, /* Hard shadow 2 */
-                8px 15px 20px rgba(0,0,0,0.2); /* Soft blur shadow */
+                2px 2px 0px #95a5a6, 
+                4px 4px 0px #7f8c8d, 
+                8px 15px 20px rgba(0,0,0,0.2);
             text-align: center;
             position: relative;
             border: 3px solid var(--ink-color);
-            /* Apply the "wiggle" SVG filter to make borders look hand-drawn */
             filter: url('#wiggle-filter'); 
-            transform: translateZ(20px); /* Lift off background */
+            transform: translateZ(20px);
         }
 
         /* Tape effect on top */
@@ -165,7 +165,7 @@
             font-size: 1.4rem;
             padding: 12px 30px;
             border: 3px solid var(--ink-color);
-            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; /* Hand-drawn shape */
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
             cursor: pointer;
             position: relative;
             transition: all 0.1s ease;
@@ -178,7 +178,7 @@
         .btn-primary {
             background-color: var(--marker-blue);
             color: white;
-            box-shadow: 6px 6px 0px var(--ink-color); /* The 3D offset shadow */
+            box-shadow: 6px 6px 0px var(--ink-color);
         }
 
         .btn-secondary {
@@ -187,13 +187,6 @@
             box-shadow: 6px 6px 0px var(--ink-color);
         }
 
-        .btn-danger {
-            background-color: var(--marker-red);
-            color: white;
-            box-shadow: 6px 6px 0px var(--ink-color);
-        }
-
-        /* Button Hover & Active States */
         .sketch-btn:hover {
             transform: translate(-2px, -2px);
             box-shadow: 8px 8px 0px var(--ink-color);
@@ -212,6 +205,7 @@
             color: var(--ink-color);
             position: relative;
             display: inline-block;
+            transition: color 0.3s ease, transform 0.3s ease;
         }
 
         .timer-display.warning {
@@ -221,6 +215,25 @@
         .timer-display.critical {
             color: var(--marker-red);
             animation: shake 0.5s infinite;
+        }
+
+        /* Paused State */
+        .timer-display.paused-state {
+            color: #bdc3c7;
+            transform: scale(0.95);
+        }
+        
+        .timer-display.paused-state::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 120%;
+            height: 10px;
+            background: var(--marker-red);
+            transform: translate(-50%, -50%) rotate(-5deg);
+            opacity: 0.5;
+            border-radius: 5px;
         }
 
         @keyframes shake {
@@ -281,6 +294,48 @@
             display: none !important;
         }
 
+        /* Sticky Notes */
+        .sticky-note {
+            position: absolute;
+            top: -10px;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Permanent Marker';
+            font-size: 0.9rem;
+            cursor: pointer;
+            z-index: 30;
+            border-bottom-right-radius: 60px 10px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+
+        .sticky-note:active {
+            transform: scale(0.95);
+        }
+
+        /* Reset Note (Right Side) */
+        .sticky-note-reset {
+            right: -10px;
+            background: var(--marker-yellow);
+            transform: rotate(15deg);
+        }
+        .sticky-note-reset:active {
+            transform: scale(0.95) rotate(15deg);
+        }
+
+        /* Pause Note (Left Side) */
+        .sticky-note-pause {
+            left: -10px;
+            background: var(--marker-pink);
+            transform: rotate(-15deg);
+        }
+        .sticky-note-pause:active {
+            transform: scale(0.95) rotate(-15deg);
+        }
+
         /* Responsive */
         @media (max-width: 600px) {
             .main-card {
@@ -291,38 +346,14 @@
             .timer-display { font-size: 4rem; }
             .btn-container { flex-direction: column; }
             .sketch-btn { width: 100%; }
-        }
-
-        /* Sticky Note for Reset Button in Timer */
-        .sticky-note {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background: var(--marker-yellow);
-            padding: 10px;
-            width: 80px;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transform: rotate(15deg);
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-            font-family: 'Permanent Marker';
-            font-size: 0.9rem;
-            cursor: pointer;
-            z-index: 30;
-            border-bottom-right-radius: 60px 10px;
-        }
-        
-        .sticky-note:active {
-            transform: rotate(15deg) scale(0.95);
+            .sticky-note { width: 60px; height: 60px; font-size: 0.75rem; }
         }
 
     </style>
 </head>
 <body>
 
-    <!-- SVG Filter Definition (Hidden) to create the squiggly line effect -->
+    <!-- SVG Filter Definition -->
     <svg style="display: none;">
         <defs>
             <filter id="wiggle-filter">
@@ -332,7 +363,7 @@
         </defs>
     </svg>
 
-    <!-- Background Elements (Generated via JS or placed here) -->
+    <!-- Background Scribbles -->
     <svg class="scribble" style="left: 10%; width: 100px;" viewBox="0 0 100 100">
         <path d="M10,50 Q30,10 50,50 T90,50" fill="none" stroke="#2c3e50" stroke-width="3" />
     </svg>
@@ -374,8 +405,14 @@
 
             <!-- TIMER SECTION -->
             <section id="timer-section" class="hidden">
-                <!-- Sticky Note Reset Button -->
-                <div id="btn-reset-sticky" class="sticky-note">
+                
+                <!-- Left: Pause Note -->
+                <div id="btn-pause-sticky" class="sticky-note sticky-note-pause">
+                    PAUSE<br>IT
+                </div>
+
+                <!-- Right: Reset Note -->
+                <div id="btn-reset-sticky" class="sticky-note sticky-note-reset">
                     STOP<br>IT
                 </div>
 
@@ -409,7 +446,6 @@
 
     <script>
         // --- AUDIO SYSTEM ---
-        // Sounds generated via code (Oscillators)
         let audioCtx;
         
         function initAudio() {
@@ -428,7 +464,7 @@
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             
-            // Short, sharp "Ding" like a marker cap clicking or a bell
+            // Short, sharp "Ding"
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(600, t);
             osc.frequency.exponentialRampToValueAtTime(800, t + 0.1);
@@ -443,20 +479,38 @@
             osc.stop(t + 0.3);
         }
 
+        function playAlarmSound() {
+            if (!audioCtx) return;
+
+            const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            // Buzzing alarm sound
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(880, t); // High pitch A5
+            
+            gain.gain.setValueAtTime(0.2, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(t);
+            osc.stop(t + 0.2);
+        }
+
         // --- 3D TILT EFFECT ---
         const card = document.querySelector('.main-card');
         const wrapper = document.getElementById('app-wrapper');
 
         document.addEventListener('mousemove', (e) => {
-            if (window.innerWidth < 600) return; // Disable on mobile
-
+            if (window.innerWidth < 600) return; 
             const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
             const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
-
             wrapper.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
         });
 
-        // Reset tilt on mouse leave
         document.addEventListener('mouseleave', () => {
             wrapper.style.transform = `rotateY(0deg) rotateX(0deg)`;
         });
@@ -476,6 +530,7 @@
         const btnStart = document.getElementById('btn-start');
         const btnNext = document.getElementById('btn-next');
         const btnResetSticky = document.getElementById('btn-reset-sticky');
+        const btnPauseSticky = document.getElementById('btn-pause-sticky');
         const btnRestart = document.getElementById('btn-restart');
 
         // --- STATE ---
@@ -484,6 +539,8 @@
         let currentQuestion = 1;
         let timeLeft = 0;
         let timerInterval = null;
+        let alarmInterval = null;
+        let isPaused = false;
 
         // --- EVENTS ---
         btnStart.addEventListener('click', () => {
@@ -493,6 +550,7 @@
 
         btnNext.addEventListener('click', nextQuestion);
         btnResetSticky.addEventListener('click', resetPractice);
+        btnPauseSticky.addEventListener('click', togglePause);
         btnRestart.addEventListener('click', () => {
             resetPractice();
             setupSection.classList.remove('hidden');
@@ -505,25 +563,52 @@
             return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
+        function stopAlarm() {
+            if (alarmInterval) {
+                clearInterval(alarmInterval);
+                alarmInterval = null;
+            }
+        }
+
+        function startAlarm() {
+            // Only start if not already running
+            if (alarmInterval) return;
+            
+            playAlarmSound(); // Play immediately
+            alarmInterval = setInterval(playAlarmSound, 800); // Repeat every 0.8s
+        }
+
         function updateVisuals() {
             timerDisplay.textContent = formatTime(timeLeft);
             progressText.textContent = `Q ${currentQuestion} / ${totalQuestions}`;
             
-            // Calculate progress
             const percent = ((currentQuestion - 1) / totalQuestions) * 100;
             progressBar.style.width = `${percent}%`;
 
             timerDisplay.classList.remove('warning', 'critical');
-            if (timeLeft <= 10) {
-                timerDisplay.classList.add('critical');
-            } else if (timeLeft <= 30) {
-                timerDisplay.classList.add('warning');
+            if (!isPaused) {
+                timerDisplay.classList.remove('paused-state');
+                
+                if (timeLeft <= 10) {
+                    timerDisplay.classList.add('critical');
+                } else if (timeLeft <= 30) {
+                    timerDisplay.classList.add('warning');
+                }
             }
         }
 
         function startTimer() {
+            // Clear existing intervals
             clearInterval(timerInterval);
+            stopAlarm(); // Stop any beeping
+            
+            // Reset time
             timeLeft = totalTimePerQuestion;
+            
+            isPaused = false;
+            btnPauseSticky.innerHTML = 'PAUSE<br>IT';
+            timerDisplay.classList.remove('paused-state');
+            
             updateVisuals();
 
             timerInterval = setInterval(() => {
@@ -534,8 +619,39 @@
                     timeLeft = 0;
                     updateVisuals();
                     clearInterval(timerInterval);
+                    startAlarm(); // Start beeping when time is up
                 }
             }, 1000);
+        }
+
+        function togglePause() {
+            if (isPaused) {
+                // Resume
+                isPaused = false;
+                btnPauseSticky.innerHTML = 'PAUSE<br>IT';
+                timerDisplay.classList.remove('paused-state');
+                updateVisuals(); // Update color state based on remaining time
+
+                // Restart interval from current timeLeft
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateVisuals();
+                    if (timeLeft < 0) {
+                        timeLeft = 0;
+                        updateVisuals();
+                        clearInterval(timerInterval);
+                        startAlarm(); // Start alarm if we resume at 0 (edge case)
+                    }
+                }, 1000);
+
+            } else {
+                // Pause
+                isPaused = true;
+                clearInterval(timerInterval);
+                stopAlarm(); // Also stop alarm if paused
+                btnPauseSticky.innerHTML = 'RESUME<br>NOW';
+                timerDisplay.classList.add('paused-state');
+            }
         }
 
         function startPractice() {
@@ -543,7 +659,6 @@
             const q = parseInt(questionsInput.value);
 
             if (isNaN(t) || t <= 0 || isNaN(q) || q <= 0) {
-                // Shake the card to indicate error
                 wrapper.style.animation = "shake 0.5s";
                 setTimeout(() => wrapper.style.animation = "", 500);
                 return;
@@ -561,6 +676,9 @@
         }
 
         function nextQuestion() {
+            // Stop the alarm immediately
+            stopAlarm();
+            
             playSketchSound();
 
             if (currentQuestion < totalQuestions) {
@@ -572,6 +690,7 @@
         }
 
         function finishPractice() {
+            stopAlarm(); // Ensure alarm is stopped
             clearInterval(timerInterval);
             timerSection.classList.add('hidden');
             summarySection.classList.remove('hidden');
@@ -579,13 +698,15 @@
         }
 
         function resetPractice() {
+            stopAlarm(); // Ensure alarm is stopped
             clearInterval(timerInterval);
             timerSection.classList.add('hidden');
             summarySection.classList.add('hidden');
             setupSection.classList.remove('hidden');
             progressBar.style.width = '0%';
-            timerDisplay.classList.remove('warning', 'critical');
+            timerDisplay.classList.remove('warning', 'critical', 'paused-state');
             timerDisplay.textContent = formatTime(totalTimePerQuestion);
+            isPaused = false;
         }
     </script>
 </body>
